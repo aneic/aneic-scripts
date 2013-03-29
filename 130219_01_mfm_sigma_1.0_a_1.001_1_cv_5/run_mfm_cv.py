@@ -3,7 +3,14 @@ import os
 import pandas as pd
 import numpy as np
 
-sys.path.append('./aneic-core/src')
+# hard-coded path to working directory (set to full path on clusters)
+work_dir = os.getcwd()
+
+# path to aneic-core sources
+ac_path = '%s/aneic-core' % work_dir
+
+# load aneic.mfm module
+sys.path.append('%s/src' % ac_path)
 import aneic.mfm as mfm
 
 if __name__ == '__main__':
@@ -12,9 +19,9 @@ if __name__ == '__main__':
         # run series
         'series' : '130219_01',
         # prefix for saving file
-        'outdir' : 'results',
+        'outdir' : '%s/results' % work_dir,
         # dataset to load from
-        'filename' : './aneic-core/data/levantine_corpus_gansell.csv',
+        'filename' : '%s/data/levantine_corpus_gansell.csv' % ac_path,
         # any strings to match to empty field
         'na_values' : ['', ' '],
         # columns to ignore
