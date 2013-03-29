@@ -1,0 +1,35 @@
+body {
+	font-family: "PT Sans", "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
+}
+
+p {
+	margin: 0;
+	padding: 0;
+}
+
+h2 {
+	font-size: 130%;
+	text-align: left;
+}
+
+h3 {
+	font-size: 110%;
+	padding-top: 1em;
+	margin-bottom: 0em;
+	text-align: left;
+}
+
+th {
+	font-size: 120%;
+	text-align: left;
+}
+
+td {
+	vertical-align: top;
+    white-space: nowrap;
+    padding-right: 2em;
+}
+
+img {
+    max-width: 20em;
+}
