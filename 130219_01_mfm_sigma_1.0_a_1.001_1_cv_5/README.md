@@ -18,7 +18,7 @@ Steps to run
     
 4. Generate html output
 
-        python ../write_html.py -o html/ results/*
+        python ../write_html.py -o html/ results/*best*
 
 5. Run post-processing interactive analysis
 
