@@ -62,11 +62,9 @@ if __name__ == '__main__':
 
     # run results
     best = defaultdict(lambda: defaultdict(lambda: {}))
-    site_counts = defaultdict(lambda: defaultdict(lambda: {}))
+    site_counts = defaultdict(lambda: defaultdict(lambda: 0))
     L = defaultdict(lambda: defaultdict(lambda: 0.0))
-    Lh = defaultdict(lambda: defaultdict(lambda: 0.0))
     l = defaultdict(lambda: defaultdict(lambda: 0.0))
-    lh = defaultdict(lambda: defaultdict(lambda: 0.0))
     kl_g = defaultdict(lambda: defaultdict(lambda: 0.0))
     d_g = defaultdict(lambda: defaultdict(lambda: 0.0))
     e_g = defaultdict(lambda: defaultdict(lambda: 0.0))
@@ -74,25 +72,21 @@ if __name__ == '__main__':
     for f in glob('results/*best*.pk.gz'):
         K = np.int(f.split('_')[2][1:])
         a = np.float(f.split('_')[3][1:])
-        fold = np.int(f.split('_')[4][4:])
-        best[a][K][fold] = pickle.load(gzip.open(f))
-        L[a][K] += best[a][K][fold]['L'][-1]
-        Lh[a][K] += best[a][K][fold]['L_test']
+        best[a][K] = pickle.load(gzip.open(f))
+        L[a][K] += best[a][K]['L'][-1]
 
         # log joint of held out data
-        u = best[a][K][fold]['u']
-        theta = best[a][K][fold]['theta']
-        real = best[a][K][fold]['real']
-        cat = best[a][K][fold]['cat']
-        l[a][K] += best[a][K][fold]['L'][-1] \
-                        - mfm._log_pq(theta['mu'], theta['l'], theta['rho'], theta['pi'],
-                                        u['a'], u['b']).sum()
-        lh[a][K] += best[a][K][fold]['L_test'] \
-                        - mfm._log_pq(theta['mu'], theta['l'], theta['rho'], theta['pi'],
-                                        u['a'], u['b']).sum()
+        u = best[a][K]['u']
+        theta = best[a][K]['theta']
+        real = best[a][K]['real']
+        cat = best[a][K]['cat']
+        l[a][K] += best[a][K]['L'][-1] \
+                        - mfm._log_pq(theta['mu'], theta['l'], 
+                                      theta['rho'], theta['pi'],
+                                      u['a'], u['b']).sum()
 
         # agreement with oracle
-        gamma = best[a][K][fold]['gamma']
+        gamma = best[a][K]['gamma']
         flat = lambda iterable: [i for it in iterable for i in it]
         o_index = pd.Index([o for o in flat(oracle) if o in gamma.index])
         o_z = np.array([z for z,o_clust in enumerate(oracle) for o in o_clust if o in gamma.index])
@@ -102,7 +96,7 @@ if __name__ == '__main__':
         e_g[a][K] += mfm.err_gamma(gamma, o_gamma)
 
         # correlation of sites with clustering
-        site_counts[a][K][fold] = pd.concat([(gamma[k].T * site.T).sum(1) for k in gamma], axis=1)
+        site_counts[a][K] = pd.concat([(gamma[k].T * site.T).sum(1) for k in gamma], axis=1)
 
 
     c_NA = defaultdict(lambda: defaultdict(lambda: 0.0))
@@ -111,25 +105,26 @@ if __name__ == '__main__':
     for a in site_counts:
         for k in site_counts[a]:
             S = site.shape[1]
+            # s_c[s,k] = number of observations at site s in state k
+            s_c = np.array(site_counts[a][k])
+            # p(z=k | l=s)
+            pk_s = mfm.norm(s_c + 1e-6, 1).T
+            # p(z1=k,z2=l | l1=s, l2=t)
+            pkl_st = pk_s[:,None,:,None] * pk_s[None,:,None,:]
+            # pi_st = sum_k p(z1=k, z2=k | l1=s, l2=t)
+            pi_st = np.sum([pkl_st[l,l,:,:] for l in range(s_c.shape[1])], 0)
+            # pi_st[:,:,1] = 1 - sum_k p(z1=k, z2=k | l1=s, l2=t)
             s_counts = np.zeros((S,S,2))
-            for f in site_counts[a][k]:
-                # s_c[s,k] = number of observations at site s in state k
-                s_c = np.array(site_counts[a][k][f])
-                # p(z=k | l=s)
-                pk_s = mfm.norm(s_c + 1e-6, 1).T
-                # p(z1=k,z2=l | l1=s, l2=t)
-                pkl_st = pk_s[:,None,:,None] * pk_s[None,:,None,:]
-                # pi_st = sum_k p(z1=k, z2=k | l1=s, l2=t)
-                pi_st = np.sum([pkl_st[l,l,:,:] for l in range(s_c.shape[1])], 0)
-                # pi_st[:,:,1] = 1 - sum_k p(z1=k, z2=k | l1=s, l2=t)
-                s_counts[:,:,0] += pi_st
-                s_counts[:,:,1] += 1 - pi_st
+            s_counts[:,:,0] = pi_st
+            s_counts[:,:,1] = 1 - pi_st
             s_corr = pd.DataFrame(mfm.norm(s_counts, 2)[:,:,0],
                         index=site.columns.levels[1], columns=site.columns.levels[1])
             c_AK[a][k] = s_corr.ix['ArslanTash', 'Khorsabad']
             c_KN[a][k] = s_corr.ix['Khorsabad', 'Nimrud']
             c_NA[a][k] = s_corr.ix['Nimrud', 'ArslanTash']
 
+    site_corr = pd.DataFrame([c_AK[a], c_KN[a], c_NA[a]], 
+                    index=['AK', 'KN', 'NA']).T
 
     # L = pd.DataFrame(L)
     # Lh = pd.DataFrame(Lh)
