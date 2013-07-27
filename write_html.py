@@ -89,7 +89,7 @@ def write_html(filename, real, cat, theta, gamma, mi=None, maxft=5,
     K = theta['mu'].shape[1]
 
     # build header strings
-    headers = ['        <th>Cluster %d</th>' % k for k in range(K)]
+    headers = ['        <th>Cluster %d</th>' % (k+1) for k in range(K)]
 
     # build strings for description cells of each cluster
     if not mi is None:
