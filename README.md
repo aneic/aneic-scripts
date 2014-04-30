@@ -20,4 +20,4 @@ Attribution
 
 The code in this repository is under MIT license. See mit-license.txt for details. Please cite this work as
 
-[INSERT SUBMITTED REFERENCE INFO HERE]
+Amy R. Gansell, Jan Willem van de Meent, Sakellarios Zairis, and Chris H. Wiggins, "Stylistic clusters and the Syrian/South Syrian tradition of first millennium BCE Levantine ivory carving: a machine learning approach," Journal of Archaeological Science 44 (2014): 194-205. 
